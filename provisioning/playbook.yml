@@ -1,0 +1,60 @@
+---
+# Provisioning de la machine "lab" du jeu "Collision MD5".
+# Necessite un acces reseau pour installer les paquets et compiler md5collgen.
+# Alternative hors-ligne : deposer un binaire md5collgen dans files/ et remplacer
+# les taches "hashclash" par une simple copie vers /usr/local/bin/md5collgen.
+- hosts: lab
+  become: yes
+  vars:
+    lab_user: ubuntu
+    lab_dir: /home/ubuntu/tp_md5
+  tasks:
+    - name: Installer les outils necessaires
+      apt:
+        name: [build-essential, git, xxd, bless, autoconf, automake, libtool, zlib1g-dev, libbz2-dev, cmake]
+        state: present
+        update_cache: yes
+
+    - name: Recuperer hashclash (source de md5collgen)
+      git:
+        repo: https://github.com/cr-marcstevens/hashclash.git
+        dest: /opt/hashclash
+        depth: 1
+
+    - name: Compiler hashclash (telecharge et compile boost, peut etre long)
+      shell: ./build.sh
+      args:
+        chdir: /opt/hashclash
+        creates: /opt/hashclash/bin/md5_fastcoll
+
+    - name: Installer md5collgen
+      copy:
+        src: /opt/hashclash/bin/md5_fastcoll
+        dest: /usr/local/bin/md5collgen
+        mode: '0755'
+        remote_src: yes
+
+    - name: Dossier des scripts de validation
+      file: { path: /usr/local/lib/md5lab, state: directory, mode: '0755' }
+
+    - name: Copier common.sh
+      copy: { src: files/common.sh, dest: /usr/local/lib/md5lab/common.sh, mode: '0644' }
+
+    - name: Installer les scripts de validation
+      copy:
+        src: "files/check_task{{ item }}.sh"
+        dest: "/usr/local/bin/check_task{{ item }}"
+        mode: '0755'
+      loop: [1, 2, 3, 4]
+
+    - name: Creer le dossier de travail
+      file: { path: "{{ lab_dir }}", state: directory, owner: "{{ lab_user }}", group: "{{ lab_user }}", mode: '0755' }
+
+    - name: Deposer les fichiers de depart
+      copy:
+        src: "files/{{ item }}"
+        dest: "{{ lab_dir }}/{{ item }}"
+        owner: "{{ lab_user }}"
+        group: "{{ lab_user }}"
+        mode: '0644'
+      loop: [prefix.txt, suffix.txt, prog.c, prog4.c]

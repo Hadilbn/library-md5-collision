@@ -1,0 +1,32 @@
+# Topologie du jeu "Collision MD5" : une seule machine de travail + un routeur d'acces.
+# Adapter les noms d'images (base_box.image) a ceux disponibles dans votre plateforme.
+name: md5-collision
+hosts:
+  - name: lab
+    base_box:
+      image: ubuntu-focal-x86_64
+      mgmt_user: ubuntu
+    flavor: standard.small
+
+routers:
+  - name: router
+    base_box:
+      image: debian-12-x86_64
+      mgmt_user: debian
+    flavor: standard.small
+
+networks:
+  - name: lab-switch
+    cidr: 10.1.26.0/24
+
+net_mappings:
+  - host: lab
+    network: lab-switch
+    ip: 10.1.26.10
+
+router_mappings:
+  - router: router
+    network: lab-switch
+    ip: 10.1.26.1
+
+groups: []

@@ -1,0 +1,184 @@
+{
+  "title": "Collision MD5",
+  "description": "Jeu lineaire base sur le MD5 Collision Attack Lab (SEED Labs) : generer des collisions MD5, puis les utiliser contre des executables et un scenario de certificat.",
+  "prerequisites": [
+    "Bases de la ligne de commande Linux",
+    "Notion de fonction de hachage"
+  ],
+  "outcomes": [
+    "Expliquer pourquoi la resistance aux collisions est necessaire",
+    "Generer deux fichiers differents de meme hash MD5",
+    "Exploiter la propriete de concatenation de MD5",
+    "Produire deux executables de meme hash et de comportements differents"
+  ],
+  "state": "UNRELEASED",
+  "show_stepper_bar": true,
+  "levels": [
+    {
+      "title": "Bienvenue",
+      "level_type": "INFO_LEVEL",
+      "estimated_duration": 2,
+      "content": "# Collision MD5\n\nMD5 a perdu sa **resistance aux collisions** : on sait fabriquer deux contenus differents ayant le meme hash.\n\nDans ce jeu, tu vas realiser les 4 taches du *MD5 Collision Attack Lab* (SEED Labs) :\n1. generer deux fichiers differents avec le meme hash ;\n2. verifier que la collision survit a l'ajout d'un suffixe commun ;\n3. produire deux **executables** de meme hash mais aux sorties differentes ;\n4. contourner un certificat : un programme *benin* et un programme *malicieux* de meme hash.\n\nConnecte-toi a la machine `lab` (utilisateur `ubuntu`). Tes fichiers sont dans `/home/ubuntu/tp_md5`. Les outils `md5collgen`, `gcc`, `xxd` et `bless` sont installes.\n\nChaque niveau se valide avec un script `check_taskN` qui affiche un **flag** a saisir ici.",
+      "order": 0,
+      "max_score": 0
+    },
+    {
+      "title": "Tache 1 - Deux fichiers, un seul hash",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 15,
+      "max_score": 100,
+      "answer": "FLAG{c0ll1de_m4me_pr3fixe_a7f3}",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "cd ~/tp_md5\nmd5collgen -p prefix.txt -o out1.bin out2.bin\ndiff out1.bin out2.bin\nmd5sum out1.bin out2.bin\ncmp -l out1.bin out2.bin\ncheck_task1 out1.bin out2.bin",
+      "content": "A partir de `/home/ubuntu/tp_md5/prefix.txt`, genere deux fichiers `out1.bin` et `out2.bin` avec `md5collgen`.\n\nVerifie avec `diff` et `md5sum`, observe-les avec `bless` ou `xxd`, puis lance :\n\n```\ncheck_task1 out1.bin out2.bin\n```\n\nSaisis le flag affiche. Note aussi le nombre d'octets differents pour ton rapport (Question 3 du TP).",
+      "hints": [
+        {
+          "title": "Outil",
+          "content": "Le programme s'appelle md5collgen. Option -p pour le prefixe, -o pour les deux fichiers de sortie.",
+          "hint_penalty": 10,
+          "order": 0
+        },
+        {
+          "title": "Verification",
+          "content": "Compare les hash avec md5sum et les contenus avec diff ou cmp -l.",
+          "hint_penalty": 15,
+          "order": 1
+        }
+      ],
+      "order": 1
+    },
+    {
+      "title": "Question 1 - Prefixe non multiple de 64",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 5,
+      "max_score": 100,
+      "answer": "28",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "ls -l prefix.txt out1.bin  ->  36 et 192 octets.\n192 - 128 (bloc de collision) - 36 = 28 octets de padding, pour atteindre 64.",
+      "content": "`prefix.txt` fait 36 octets. Les fichiers produits a la tache 1 font plus que `36 + 128` octets : l'outil a ajoute un **padding**.\n\nCombien d'octets de padding ont ete ajoutes ? (reponse : un nombre)",
+      "hints": [
+        {
+          "title": "Calcul",
+          "content": "Taille de out1.bin = prefixe + padding + 128 octets de collision. Utilise ls -l ou wc -c.",
+          "hint_penalty": 10,
+          "order": 0
+        }
+      ],
+      "order": 2
+    },
+    {
+      "title": "Question 2 - Prefixe de exactement 64 octets",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 5,
+      "max_score": 100,
+      "answer": "192",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "head -c 64 /dev/urandom > prefix64.txt\nmd5collgen -p prefix64.txt -o out3.bin out4.bin\nwc -c out3.bin  ->  192 (64 + 128, aucun padding ajoute).",
+      "content": "Cree un prefixe de **exactement 64 octets** :\n\n```\nhead -c 64 /dev/urandom > prefix64.txt\n```\n\nLance `md5collgen` dessus. Quelle est la taille (en octets) des fichiers de sortie ? (reponse : un nombre)",
+      "hints": [
+        {
+          "title": "Verification",
+          "content": "Verifie d'abord que prefix64.txt fait bien 64 octets avec wc -c.",
+          "hint_penalty": 10,
+          "order": 0
+        }
+      ],
+      "order": 3
+    },
+    {
+      "title": "Tache 2 - La collision survit a un suffixe",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 15,
+      "max_score": 100,
+      "answer": "FLAG{suffixe_commun_meme_hash_5be2}",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "cd ~/tp_md5\ncat out1.bin suffix.txt > final1.bin\ncat out2.bin suffix.txt > final2.bin\nmd5sum final1.bin final2.bin\ncheck_task2 final1.bin final2.bin",
+      "content": "Propriete de MD5 : si `MD5(M) = MD5(N)` alors `MD5(M || T) = MD5(N || T)`.\n\nAjoute le **meme** suffixe (`suffix.txt` ou le tien) a `out1.bin` et `out2.bin` pour obtenir `final1.bin` et `final2.bin`, puis lance :\n\n```\ncheck_task2 final1.bin final2.bin\n```",
+      "hints": [
+        {
+          "title": "Concatenation",
+          "content": "La commande cat permet de concatener des fichiers : cat A B > C.",
+          "hint_penalty": 10,
+          "order": 0
+        }
+      ],
+      "order": 4
+    },
+    {
+      "title": "Tache 3 - Deux executables, un seul hash",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 25,
+      "max_score": 100,
+      "answer": "FLAG{deux_executables_un_hash_c91d}",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "cd ~/tp_md5\ngcc -o prog prog.c\nOFF=$(grep -obUaP 'A{200}' prog | cut -d: -f1)\nPL=$(( (OFF + 63) / 64 * 64 ))\nhead -c $PL prog > prefix_bin\ntail -c +$((PL + 129)) prog > suffix_bin\nmd5collgen -p prefix_bin -o coll1.bin coll2.bin\ncat coll1.bin suffix_bin > prog1\ncat coll2.bin suffix_bin > prog2\nchmod +x prog1 prog2\nmd5sum prog1 prog2\ncheck_task3 prog1 prog2",
+      "content": "Compile `prog.c` (le tableau `xyz` contient 200 octets `0x41`). Decoupe l'executable en **prefixe (multiple de 64 octets) / 128 octets / suffixe**, genere la collision sur le prefixe, puis recolle pour obtenir `prog1` et `prog2` de meme hash MD5 mais aux sorties differentes.\n\nValide avec :\n\n```\ncheck_task3 prog1 prog2\n```",
+      "hints": [
+        {
+          "title": "Localiser le tableau",
+          "content": "grep -obUaP 'A{200}' prog donne l'offset (en octets) du debut du tableau.",
+          "hint_penalty": 10,
+          "order": 0
+        },
+        {
+          "title": "Choisir le prefixe",
+          "content": "Prends le plus petit multiple de 64 superieur ou egal a l'offset : les 128 octets suivants restent dans le tableau.",
+          "hint_penalty": 15,
+          "order": 1
+        },
+        {
+          "title": "Decouper",
+          "content": "head -c N pour le prefixe, tail -c +M pour le suffixe (M = N + 129).",
+          "hint_penalty": 15,
+          "order": 2
+        }
+      ],
+      "order": 5
+    },
+    {
+      "title": "Tache 4 - Programme benin et programme malicieux",
+      "level_type": "TRAINING_LEVEL",
+      "estimated_duration": 30,
+      "max_score": 100,
+      "answer": "FLAG{certificat_md5_contourne_3e08}",
+      "incorrect_answer_limit": 5,
+      "solution_penalized": true,
+      "solution": "cd ~/tp_md5\ngcc -o prog4 prog4.c\nXO=$(grep -obUaP 'A{200}' prog4 | sed -n 1p | cut -d: -f1)\nYO=$(grep -obUaP 'A{200}' prog4 | sed -n 2p | cut -d: -f1)\nPL=$(( (XO + 63) / 64 * 64 ))\nhead -c $PL prog4 > prefix_bin\nmd5collgen -p prefix_bin -o coll1.bin coll2.bin\ntail -c +$((PL + 129)) prog4 > suffix_bin\ntail -c 128 coll1.bin > P.bin\nREL=$(( YO - XO - 128 ))   # position de Y dans suffix_bin\nhead -c $REL suffix_bin > sb\ntail -c +$((REL + 129)) suffix_bin > sa\ncat sb P.bin sa > suffix_patched\ncat coll1.bin suffix_patched > prog4_benin\ncat coll2.bin suffix_patched > prog4_malicieux\nchmod +x prog4_benin prog4_malicieux\nmd5sum prog4_benin prog4_malicieux\n./prog4_benin; ./prog4_malicieux\ncheck_task4 prog4_benin prog4_malicieux",
+      "content": "`prog4.c` compare deux tableaux `X` et `Y` : s'ils sont egaux, la branche *benin* s'execute, sinon la branche *malicieuse* (simulee par un message).\n\nProduis `prog4_benin` (X = P, Y = P) et `prog4_malicieux` (X = Q, Y = P) avec **le meme hash MD5**, puis valide :\n\n```\ncheck_task4 prog4_benin prog4_malicieux\n```\n\nC'est le scenario du certificat : le hash certifie pour la version benigne reste valable pour la version malicieuse.",
+      "hints": [
+        {
+          "title": "Une seule collision",
+          "content": "Une seule paire (P, Q) suffit : X recoit P ou Q, Y recoit toujours P.",
+          "hint_penalty": 15,
+          "order": 0
+        },
+        {
+          "title": "Deux tableaux",
+          "content": "grep -obUaP 'A{200}' prog4 renvoie deux offsets : celui de X puis celui de Y.",
+          "hint_penalty": 15,
+          "order": 1
+        },
+        {
+          "title": "Meme decalage",
+          "content": "Dans Y, remplace les 128 octets situes au meme decalage relatif que dans X (apres l'alignement sur 64).",
+          "hint_penalty": 20,
+          "order": 2
+        }
+      ],
+      "order": 6
+    },
+    {
+      "title": "Conclusion",
+      "level_type": "INFO_LEVEL",
+      "estimated_duration": 2,
+      "content": "Bravo : tu as montre qu'une autorite qui certifie un programme par son hash MD5 peut etre trompee.\n\nA retenir :\n- MD5 n'est plus resistant aux collisions ;\n- la propriete de concatenation permet d'inserer une collision dans un fichier reel ;\n- il faut utiliser SHA-256 ou SHA-3 pour toute verification d'integrite ou de signature.",
+      "order": 7,
+      "max_score": 0
+    }
+  ]
+}
