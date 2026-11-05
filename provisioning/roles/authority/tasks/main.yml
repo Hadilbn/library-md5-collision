@@ -1,0 +1,84 @@
+# The "authority" host: Trusted Software Certification Authority.
+# It checks the students' work and holds the per-student (APG) flags.
+# Students have NO account on this host.
+
+- name: Adding aliases
+  loop: "{{ aliases | dict2items }}"
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.value }} {{ item.key }}"
+
+- name: Install Python Flask
+  apt:
+    name:
+      - python3
+      - python3-flask
+    state: present
+    update_cache: yes
+
+- name: Create the unprivileged user that executes uploaded programs
+  user:
+    name: carunner
+    shell: /usr/sbin/nologin
+    create_home: no
+    system: yes
+
+- name: Create CA directories (root only)
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  loop:
+    - /opt/ca
+    - /opt/ca/state
+
+- name: Create the work directory for executed programs
+  file:
+    path: /var/lib/carunner
+    state: directory
+    owner: root
+    group: root
+    mode: '0711'
+
+- name: Install the CA server
+  copy:
+    src: ca_server.py
+    dest: /opt/ca/ca_server.py
+    owner: root
+    mode: '0700'
+  notify: Restart CA service
+
+- name: Install the CA configuration with the student's flags
+  template:
+    src: config.json.j2
+    dest: /opt/ca/config.json
+    owner: root
+    mode: '0600'
+  notify: Restart CA service
+
+- name: Install the systemd unit
+  template:
+    src: ca-authority.service.j2
+    dest: /etc/systemd/system/ca-authority.service
+    mode: '0644'
+  notify: Restart CA service
+
+- name: Enable and start the CA service
+  systemd:
+    name: ca-authority
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Flush handlers
+  meta: flush_handlers
+
+- name: Wait for the CA service
+  uri:
+    url: "http://127.0.0.1:{{ lab_authority_port }}/health"
+  register: ca_health
+  until: ca_health.status == 200
+  retries: 15
+  delay: 2

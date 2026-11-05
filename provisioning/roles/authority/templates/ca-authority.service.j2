@@ -1,0 +1,14 @@
+[Unit]
+Description=Trusted Software Certification Authority (MD5 collision lab)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=CA_PORT={{ lab_authority_port }}
+ExecStart=/usr/bin/python3 /opt/ca/ca_server.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

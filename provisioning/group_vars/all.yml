@@ -1,0 +1,20 @@
+# Values shared by the "seed" and "authority" hosts.
+# Both hosts derive the per-student files from the SAME APG variables, so the
+# authority knows exactly which prefix/suffix each student received.
+# The default() values are only used when the sandbox is built without APG (local tests).
+
+lab_token: "{{ (student_token | default('DEMOtoken0000000') | regex_replace('[^A-Za-z0-9]', 'x'))[:16] }}"
+
+# Question 1: prefix length is NOT a multiple of 64 -> md5collgen pads with t1_padding zero bytes
+lab_t1_padding: "{{ t1_padding | default(37) | int }}"
+lab_t1_prefix_len: "{{ 256 - (lab_t1_padding | int) }}"
+lab_t1_prefix: "{{ ('SEED-MD5-LAB task1 prefix student-id=' ~ lab_token ~ ' :: ' ~ ('The quick brown fox jumps over the lazy dog. ' * 8))[:(lab_t1_prefix_len | int)] }}"
+
+# Question 2: prefix of exactly 64 bytes
+lab_q2_prefix: "{{ ('SEED-MD5-LAB q2 prefix student-id=' ~ lab_token ~ ' ' ~ ('#' * 64))[:64] }}"
+
+# Task 2: suffix T to append to both colliding files
+lab_task2_suffix: "{{ 'SEED-MD5-LAB task2 suffix student-id=' ~ lab_token ~ ' :: if MD5(M)==MD5(N) then MD5(M||T)==MD5(N||T). End of suffix.' }}"
+
+lab_authority_ip: 10.1.26.9
+lab_authority_port: 80

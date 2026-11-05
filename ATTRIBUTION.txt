@@ -1,0 +1,11 @@
+The game design of this project is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).
+
+Based on:
+  * SEED Labs - MD5 Collision Attack Lab, Copyright (c) 2018 by Wenliang Du,
+    licensed under CC BY-NC-SA 4.0 (https://seedsecuritylabs.org/).
+  * Repository layout of library-junior-hacker (https://github.com/cyberrangecz/library-junior-hacker),
+    MIT / CC BY 4.0, Cybersecurity Laboratory, Faculty of Informatics, Masaryk University.
+
+md5collgen (provisioning/roles/seed/files/md5collgen) is a static build of
+"Fast MD5 Collision Generation" (fastcoll) by Marc Stevens, https://www.win.tue.nl/hashclash/

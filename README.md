@@ -1,38 +1,62 @@
-# Jeu de cybersécurité « Collision MD5 »
+# Cybersecurity game "MD5 Collision Attack Lab"
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-Jeu linéaire pour la plateforme [CyberRangeCZ](https://docs.platform.cyberrange.cz/), basé sur le *MD5 Collision Attack Lab* de SEED Labs. Organisation inspirée du dépôt `cyberrangecz/library-junior-hacker`.
+Linear game for [CyberRangeCZ Platform](https://docs.platform.cyberrange.cz/) with
+[APG](https://docs.platform.cyberrange.cz/user-guide-advanced/trainings/trainings-overview/#automatic-generation-problem-apg-in-linear-training-definition)
+(every sandbox gets **personal files and personal flags**), based on the SEED Lab *MD5 Collision Attack Lab*.
 
-## Résumé des niveaux
+## Game Levels Summary
+| Level | Lab task | Flag source | Points |
+|-|-|-|-|
+| 1 | Task 1 - collision with `md5collgen` from a personal prefix | authority (`flag_task1`) | 25 |
+| 2 | Task 1 Q1 - number of padding bytes (prefix length differs per student) | `t1_padding` | 20 |
+| 3 | Task 1 Q2 - collision from a 64-byte prefix | authority (`flag_q2`) | 20 |
+| 4 | Task 1 Q3 - positions of the differing bytes (checked on the student's own files) | authority (`flag_q3`) | 20 |
+| 5 | Task 2 - `MD5(M‖T) = MD5(N‖T)` with a personal suffix | authority (`flag_task2`) | 25 |
+| 6 | Task 3 - two executables with the same MD5 (programs are executed) | authority (`flag_task3`) | 40 |
+| 7 | Task 4 - certify the benign program | authority (`flag_cert`) | 15 |
+| 8 | Task 4 - deploy the malicious twin with the same certificate | authority (`flag_final`) | 35 |
 
-- lire l'introduction et se connecter à la machine `lab`
-- **Tâche 1** : générer deux fichiers différents de même hash MD5 avec `md5collgen`
-- **Questions 1 et 2** : comprendre le padding (préfixe de 36 puis de 64 octets)
-- **Tâche 2** : vérifier que la collision survit à l'ajout d'un suffixe commun (`cat`)
-- **Tâche 3** : produire deux exécutables de même hash et de sorties différentes (`head`, `tail`, `grep`)
-- **Tâche 4** : scénario du certificat, programme bénin et programme malicieux de même hash
-- conclusion
+**Scoring:** 200 points = **20/20** (mark = points / 10). The platform only stores integer
+points, so hint penalties of **5–20 points = 0.5–2 points /20**. Revealing a solution = 0 for that level.
 
-## Topologie
+## Anti-cheating design
+* `variables.yml` generates, per sandbox, a `student_token`, the prefix length (`t1_padding`) and 7 random flags.
+* The flags are **never stored on the student's machine**: they live only on the `authority` host
+  (`/opt/ca/config.json`, root 0600). Students have no account there.
+* The authority only accepts collisions generated from the **student's own** prefix (it contains the token),
+  so files from a classmate are rejected. Patching the token into a classmate's binary breaks the collision.
+* Uploaded programs are executed as the unprivileged user `carunner` (timeout, rlimits) and cannot read the flags.
 
-| Hôte   | Image               | Flavor         |
-| ------ | ------------------- | -------------- |
-| lab    | ubuntu-focal-x86_64 | standard.small |
-| router | debian-12-x86_64    | standard.small |
+## Topology summary
+|Host|Image|Flavor|Role|
+|-|-|-|-|
+|seed|seed (SEED Ubuntu 20.04)|m1.medium|student workstation (`user` / `Password123`)|
+|authority|debian-12-x86_64|m1.medium|Certification Authority (checker + flags), `10.1.26.9`, port 80|
+|router|debian-12-x86_64|m1.medium|router|
 
-## Contenu du dépôt
+> Adapt `image:` / `mgmt_user:` of the `seed` host in `topology.yml` to the exact name of the SEED image
+> and its management user in your OpenStack project.
 
-- `game_design.md` : conception pédagogique, énoncés, indices et solutions
-- `training.json` : définition d'entraînement (niveaux, flags, indices, pénalités)
-- `topology.yml` : machines et réseau
-- `provisioning/` : playbook Ansible, fichiers de départ (`prefix.txt`, `suffix.txt`, `prog.c`, `prog4.c`) et scripts `check_task1..4` qui valident le travail et affichent le flag
+## Files
+* `topology.yml`, `variables.yml`, `training.json` – sandbox + training definitions
+* `provisioning/` – Ansible (roles `seed`, `authority`, `hosts`); `md5collgen` (static build of
+  Marc Stevens' *fastcoll*) is installed only if the SEED image does not already have it
+* `solution/solve.sh` – reference solution (run on `seed` as `user`; solves all 8 levels)
+* `solution/build_training.py` – regenerates `training.json`
 
-## Points à adapter
+## Import into CyberRangeCZ
+1. Push this repository to a Git server reachable by the platform.
+2. **Sandbox definitions → Create**: Git URL of the repository, revision `main`.
+3. Create a pool (one sandbox per student, e.g. 30) and allocate.
+4. **Training definitions → Upload** `training.json`
+   (it is an APG training: *variant sandboxes* enabled, levels use *Variant Answers*).
+5. Create a training instance with the definition and the pool.
 
-- Les noms d'images dans `topology.yml` doivent correspondre à ceux de votre plateforme.
-- Le playbook compile `md5collgen` depuis `hashclash` (accès réseau requis). Hors ligne, déposez un binaire `md5collgen` et remplacez ces tâches par une copie.
-- Les flags sont statiques et lisibles dans `/usr/local/bin/check_task*` : suffisant pour un TP, à durcir pour un usage en compétition.
-- Le format exact de `training.json` et `topology.yml` doit être vérifié par un import test, puis comparé à un export de votre plateforme.
+## License
+* The code (Ansible and custom code) is licensed under the MIT License.
+* The game design is licensed under CC BY-NC-SA 4.0, because it is derived from the SEED Lab
+  "MD5 Collision Attack Lab", Copyright © 2018 by Wenliang Du (CC BY-NC-SA 4.0).
 
-## Licence
-
-Code (playbook, scripts, JSON/YAML) : MIT. Conception du jeu : CC BY-NC-SA 4.0, car dérivée du SEED Lab (voir `ATTRIBUTION.txt`).
+**Attribution:** see `ATTRIBUTION.txt`.

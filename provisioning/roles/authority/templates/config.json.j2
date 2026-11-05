@@ -1,0 +1,15 @@
+{{ {
+  "token": lab_token,
+  "t1_prefix": lab_t1_prefix,
+  "q2_prefix": lab_q2_prefix,
+  "task2_suffix": lab_task2_suffix,
+  "flags": {
+    "flag_task1": flag_task1 | default('demo-task1'),
+    "flag_q2":    flag_q2    | default('demo-q2'),
+    "flag_q3":    flag_q3    | default('demo-q3'),
+    "flag_task2": flag_task2 | default('demo-task2'),
+    "flag_task3": flag_task3 | default('demo-task3'),
+    "flag_cert":  flag_cert  | default('demo-cert'),
+    "flag_final": flag_final | default('demo-final')
+  }
+} | to_nice_json }}

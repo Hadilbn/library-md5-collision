@@ -1,0 +1,41 @@
+#include <stdio.h>
+#include <string.h>
+
+/* Do NOT modify this line: the authority checks your student-id. */
+const char student_id[] = "{{ lab_token }}";
+
+/* Both arrays are filled with 0x41 ('A') so you can find them in the binary. */
+unsigned char X[200] = {
+{% for row in range(20) %}
+  {% for col in range(10) %}0x41{% if not (row == 19 and col == 9) %}, {% endif %}{% endfor %}
+
+{% endfor %}
+};
+
+unsigned char Y[200] = {
+{% for row in range(20) %}
+  {% for col in range(10) %}0x41{% if not (row == 19 and col == 9) %}, {% endif %}{% endfor %}
+
+{% endfor %}
+};
+
+void benign_code(void)
+{
+  printf("BENIGN: I am a good program, I only print nice messages.\n");
+}
+
+void malicious_code(void)
+{
+  /* In real life this would be the harmful payload. */
+  printf("MALICIOUS: all your files belong to me!\n");
+}
+
+int main()
+{
+  printf("student-id: %s\n", student_id);
+  if (memcmp(X, Y, sizeof(X)) == 0)
+    benign_code();
+  else
+    malicious_code();
+  return 0;
+}

@@ -1,0 +1,86 @@
+# The "seed" host: the student's SEED Ubuntu 20.04 workstation.
+
+- name: Adding aliases
+  loop: "{{ aliases | dict2items }}"
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item.value }} {{ item.key }}"
+
+- name: Install the lab tools
+  apt:
+    name:
+      - gcc
+      - libc6-dev
+      - curl
+      - vim-common   # xxd
+      - diffutils
+    state: present
+    update_cache: yes
+
+- name: Install the bless hex editor (already present on the SEED image)
+  apt:
+    name: bless
+    state: present
+  ignore_errors: yes
+
+- name: Check whether md5collgen is already installed (SEED image ships /usr/bin/md5collgen)
+  stat:
+    path: /usr/bin/md5collgen
+  register: md5collgen_bin
+
+- name: Install the bundled md5collgen (static build of Marc Stevens' fastcoll)
+  copy:
+    src: md5collgen
+    dest: /usr/bin/md5collgen
+    mode: '0755'
+  when: not md5collgen_bin.stat.exists
+
+- name: Install ca-submit
+  template:
+    src: ca-submit.j2
+    dest: /usr/local/bin/ca-submit
+    mode: '0755'
+
+- name: Create the lab directories
+  file:
+    path: "{{ lab_home }}/{{ item }}"
+    state: directory
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: '0755'
+  loop: ['', task1, task2, task3, task4]
+
+- name: Create the personal prefix and suffix files
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ lab_home }}/{{ item.dest }}"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: '0644'
+  loop:
+    - { dest: task1/prefix.txt,   content: "{{ lab_t1_prefix }}" }
+    - { dest: task1/prefix64.txt, content: "{{ lab_q2_prefix }}" }
+    - { dest: task2/suffix.txt,   content: "{{ lab_task2_suffix }}" }
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Verify the prefix sizes
+  stat:
+    path: "{{ lab_home }}/{{ item.dest }}"
+  register: prefix_stat
+  failed_when: prefix_stat.stat.size != (item.size | int)
+  loop:
+    - { dest: task1/prefix.txt,   size: "{{ lab_t1_prefix_len }}" }
+    - { dest: task1/prefix64.txt, size: 64 }
+
+- name: Create the C sources and README
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ lab_home }}/{{ item.dest }}"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: '0644'
+  loop:
+    - { src: xyz.c.j2,      dest: task3/xyz.c }
+    - { src: program.c.j2,  dest: task4/program.c }
+    - { src: README.txt.j2, dest: README.txt }

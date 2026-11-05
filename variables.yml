@@ -1,0 +1,51 @@
+# APG (Automatic Problem Generation) variables.
+# Every sandbox (= every student) gets its own random values, so flags cannot be shared.
+# See https://docs.platform.cyberrange.cz/user-guide-advanced/sandboxes/apg-variables/
+
+# Not a flag: unique ID embedded in every file the student must use.
+# The authority rejects files that do not contain this student's ID in the colliding prefix.
+student_token:
+    type: password
+    length: 16
+
+# Level 1 - first collision from the provided prefix.txt
+flag_task1:
+    type: password
+    length: 12
+
+# Level 2 (Question 1) - number of zero padding bytes added by md5collgen.
+# prefix.txt is generated with length 256 - t1_padding, so the answer differs per student.
+t1_padding:
+    type: port
+    min: 1
+    max: 63
+
+# Level 3 (Question 2) - collision from an exactly 64-byte prefix
+flag_q2:
+    type: password
+    length: 12
+
+# Level 4 (Question 3) - positions of the differing bytes
+flag_q3:
+    type: password
+    length: 12
+
+# Level 5 (Task 2) - MD5(M || T) == MD5(N || T)
+flag_task2:
+    type: password
+    length: 12
+
+# Level 6 (Task 3) - two executables, same MD5, different xyz array
+flag_task3:
+    type: password
+    length: 12
+
+# Level 7 (Task 4, step 1) - certificate serial number for the benign program
+flag_cert:
+    type: password
+    length: 12
+
+# Level 8 (Task 4, step 2) - malicious program accepted with the benign certificate
+flag_final:
+    type: password
+    length: 12

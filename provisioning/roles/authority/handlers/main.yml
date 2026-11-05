@@ -1,0 +1,5 @@
+- name: Restart CA service
+  ansible.builtin.systemd:
+    name: ca-authority
+    state: restarted
+    daemon_reload: true

@@ -1,0 +1,5 @@
+aliases:
+  seed: 10.1.27.23
+  authority: 10.1.26.9
+lab_user: user
+lab_home: /home/user/lab

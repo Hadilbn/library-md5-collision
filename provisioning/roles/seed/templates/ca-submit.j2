@@ -1,0 +1,32 @@
+#!/bin/bash
+# ca-submit - send your work to the Trusted Software Certification Authority
+CA="http://authority:{{ lab_authority_port }}/api"
+
+usage() {
+cat <<'USAGE'
+Usage:
+  ca-submit task1   <out1.bin> <out2.bin>               # Level 1: collision from prefix.txt
+  ca-submit q2      <out1.bin> <out2.bin>               # Level 3: collision from prefix64.txt
+  ca-submit q3      <out1.bin> <out2.bin> "<positions>" # Level 4: differing bytes, e.g. "19,45,59"
+  ca-submit task2   <file1> <file2>                     # Level 5: collision pair + suffix.txt
+  ca-submit task3   <prog1> <prog2>                     # Level 6: two executables, same MD5
+  ca-submit certify <benign_prog>                       # Level 7: get a certificate
+  ca-submit deploy  <prog>                              # Level 8: deploy with the certificate
+You can also use the web form: http://authority/
+USAGE
+}
+
+need() { for f in "$@"; do [ -f "$f" ] || { echo "File not found: $f"; exit 1; }; done; }
+
+case "$1" in
+  task1|q2|task2|task3)
+    [ $# -eq 3 ] || { usage; exit 1; }; need "$2" "$3"
+    curl -sS --noproxy "*" -F "file1=@$2" -F "file2=@$3" "$CA/$1" ;;
+  q3)
+    [ $# -eq 4 ] || { usage; exit 1; }; need "$2" "$3"
+    curl -sS --noproxy "*" -F "file1=@$2" -F "file2=@$3" -F "offsets=$4" "$CA/q3" ;;
+  certify|deploy)
+    [ $# -eq 2 ] || { usage; exit 1; }; need "$2"
+    curl -sS --noproxy "*" -F "file=@$2" "$CA/$1" ;;
+  *) usage ;;
+esac
