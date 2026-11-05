@@ -1,8 +1,0 @@
-Ce jeu est dérivé du "MD5 Collision Attack Lab" de SEED Labs.
-Copyright (c) 2018 Wenliang Du, Syracuse University.
-Licence : Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International.
-https://seedsecuritylabs.org
-
-L'outil md5collgen est basé sur les travaux de Marc Stevens (https://www.win.tue.nl/hashclash/).
-L'organisation du dépôt s'inspire de cyberrangecz/library-junior-hacker
-(Cybersecurity Laboratory, Faculty of Informatics, Masaryk University).
