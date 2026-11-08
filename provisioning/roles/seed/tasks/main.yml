@@ -1,0 +1,108 @@
+---
+- name: Check required tools
+  ansible.builtin.shell: "command -v {{ item }}"
+  loop: [gcc, curl, xxd]
+  register: tools
+  changed_when: false
+  failed_when: false
+
+- name: Try to install missing basic tools (best effort, needs a package mirror)
+  ansible.builtin.apt:
+    name: "{{ item.item }}"
+    state: present
+    update_cache: true
+  loop: "{{ tools.results }}"
+  when: item.rc != 0
+  failed_when: false
+
+- name: Look for md5collgen
+  ansible.builtin.stat:
+    path: /usr/bin/md5collgen
+  register: collgen
+
+- name: Install md5collgen from the repository if the image does not ship it (optional file)
+  ansible.builtin.copy:
+    src: md5collgen
+    dest: /usr/bin/md5collgen
+    mode: "0755"
+  when: not collgen.stat.exists
+  ignore_errors: true
+
+- name: Re-check md5collgen
+  ansible.builtin.stat:
+    path: /usr/bin/md5collgen
+  register: collgen2
+
+- name: Fail early if md5collgen is not available
+  ansible.builtin.fail:
+    msg: >-
+      md5collgen not found. Use an image that contains it (SEED VM) or put the binary in
+      provisioning/roles/seed/files/md5collgen (from SEED Labsetup.zip).
+  when: not collgen2.stat.exists
+
+- name: Name resolution for the authority
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ authority_ip }} authority"
+    regexp: '\sauthority$'
+
+- name: Set the documented password of the SEED account
+  ansible.builtin.shell: "echo 'seed:dees' | chpasswd"
+  no_log: true
+  changed_when: true
+
+- name: Create working directories
+  ansible.builtin.file:
+    path: "/home/{{ lab_user }}/lab/{{ item }}"
+    state: directory
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0755"
+  loop: ["", task1, task2, task3, task4]
+
+- name: Personal prefix (Task 1)
+  ansible.builtin.copy:
+    content: "{{ prefix_text }}"
+    dest: "/home/{{ lab_user }}/lab/task1/prefix.txt"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0644"
+
+- name: Personal suffix T (Task 2)
+  ansible.builtin.copy:
+    content: "SUFFIX-T token={{ tok }} - the same suffix is appended to both files\n"
+    dest: "/home/{{ lab_user }}/lab/task2/suffix.txt"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0644"
+
+- name: Source of Task 3
+  ansible.builtin.template:
+    src: task3.c.j2
+    dest: "/home/{{ lab_user }}/lab/task3/task3.c"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0644"
+
+- name: Source of Task 4
+  ansible.builtin.template:
+    src: task4.c.j2
+    dest: "/home/{{ lab_user }}/lab/task4/task4.c"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0644"
+
+- name: Lab README
+  ansible.builtin.template:
+    src: README.txt.j2
+    dest: "/home/{{ lab_user }}/lab/README.txt"
+    owner: "{{ lab_user }}"
+    group: "{{ lab_user }}"
+    mode: "0644"
+
+- name: Install helper scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: "0755"
+  loop: [authority-upload, authority-verify]

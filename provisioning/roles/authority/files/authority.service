@@ -1,0 +1,11 @@
+[Unit]
+Description=MD5 lab certification authority
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/authority/server.py
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

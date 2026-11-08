@@ -1,0 +1,21 @@
+---
+# Both plays compute the same per-student values from the APG variables (variables.yml).
+- name: Certification authority
+  hosts: authority
+  become: true
+  vars:
+    tok: "{{ ((student_id | string) | regex_replace('[^A-Za-z0-9]', '') | lower)[:24] or 'student' }}"
+    prefix_text: "{{ (('MD5-LAB-PREFIX token=' ~ tok ~ ' ') ~ ('.' * (prefix_len | int)))[:(prefix_len | int)] }}"
+  roles:
+    - authority
+
+- name: Student workstation (SEED)
+  hosts: seed
+  become: true
+  vars:
+    lab_user: seed
+    authority_ip: 10.1.26.9
+    tok: "{{ ((student_id | string) | regex_replace('[^A-Za-z0-9]', '') | lower)[:24] or 'student' }}"
+    prefix_text: "{{ (('MD5-LAB-PREFIX token=' ~ tok ~ ' ') ~ ('.' * (prefix_len | int)))[:(prefix_len | int)] }}"
+  roles:
+    - seed

@@ -1,0 +1,8 @@
+#!/bin/bash
+# Usage: authority-verify <task> [key=value ...]
+AUTH="http://authority:8080"
+[ $# -lt 1 ] && { echo "Usage: $0 <task> [key=value ...]"; exit 1; }
+task="$1"; shift
+args=()
+for kv in "$@"; do args+=(--data-urlencode "$kv"); done
+curl -sS --max-time 90 -G "${args[@]}" "$AUTH/verify/$task"

@@ -1,0 +1,65 @@
+---
+- name: Create authority directories (root only)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop:
+    - /opt/authority
+    - /var/lib/authority
+    - /var/lib/authority/uploads
+
+- name: Install verification server
+  ansible.builtin.copy:
+    src: server.py
+    dest: /opt/authority/server.py
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Store the student's prefix (same content as on the SEED machine)
+  ansible.builtin.copy:
+    content: "{{ prefix_text }}"
+    dest: /opt/authority/prefix.bin
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Store token and per-sandbox flags
+  ansible.builtin.copy:
+    content: "{{ cfg | to_nice_json }}"
+    dest: /opt/authority/config.json
+    owner: root
+    group: root
+    mode: "0600"
+  vars:
+    cfg:
+      token: "{{ tok }}"
+      flags:
+        t1: "{{ flag_t1 }}"
+        t1q: "{{ flag_t1q }}"
+        t2: "{{ flag_t2 }}"
+        t3a: "{{ flag_t3a }}"
+        t3b: "{{ flag_t3b }}"
+        t4: "{{ flag_t4 }}"
+  no_log: true
+
+- name: Install systemd unit
+  ansible.builtin.copy:
+    src: authority.service
+    dest: /etc/systemd/system/authority.service
+    mode: "0644"
+
+- name: Enable and (re)start the authority service
+  ansible.builtin.systemd:
+    name: authority
+    daemon_reload: true
+    enabled: true
+    state: restarted
+
+- name: Wait for the service
+  ansible.builtin.wait_for:
+    port: 8080
+    timeout: 30

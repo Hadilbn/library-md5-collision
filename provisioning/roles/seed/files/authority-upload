@@ -1,0 +1,10 @@
+#!/bin/bash
+# Usage: authority-upload <task> <file> [<file> ...]
+AUTH="http://authority:8080"
+[ $# -lt 2 ] && { echo "Usage: $0 <task> <file> [<file> ...]"; exit 1; }
+task="$1"; shift
+for f in "$@"; do
+  [ -f "$f" ] || { echo "$f: no such file"; continue; }
+  echo -n "uploading $(basename "$f") -> "
+  curl -sS --max-time 30 --data-binary @"$f" "$AUTH/submit/$task/$(basename "$f")"
+done

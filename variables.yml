@@ -1,0 +1,29 @@
+# Variables generated randomly for EACH sandbox (APG = Automatic Problem Generation).
+# They are available in the Ansible provisioning and are used as per-student flags.
+student_id:
+  type: username
+
+prefix_len:            # length (bytes) of each student's prefix.txt (never a multiple of 64)
+  type: port
+  min: 70
+  max: 250
+  prohibited: [128, 192]
+
+flag_t1:
+  type: password
+  length: 16
+flag_t1q:
+  type: password
+  length: 16
+flag_t2:
+  type: password
+  length: 16
+flag_t3a:
+  type: password
+  length: 16
+flag_t3b:
+  type: password
+  length: 16
+flag_t4:
+  type: password
+  length: 16

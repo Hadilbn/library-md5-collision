@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <string.h>
+
+#define ID "{{ tok }}"
+
+unsigned char X[200] = {
+{% for i in range(20) %}
+  0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
+{% endfor %}
+};
+
+unsigned char Y[200] = {
+{% for i in range(20) %}
+  0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
+{% endfor %}
+};
+
+int main()
+{
+  if (memcmp(X, Y, 200) == 0)
+    printf("BENIGN:%s\n", ID);      /* run benign code */
+  else
+    printf("MALICIOUS:%s\n", ID);   /* run malicious code */
+  return 0;
+}

@@ -1,0 +1,12 @@
+This work is based on:
+
+1. "MD5 Collision Attack Lab", SEED Labs, Copyright 2018 Wenliang Du,
+   licensed under CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/).
+   The lab tasks and the figures' ideas were adapted into an automated CyberRangeCZ scenario.
+   Tool used by students: md5collgen (fastcoll) by Marc Stevens - https://www.win.tue.nl/hashclash/
+
+2. Structure of the scenario (topology.yml / training.json / provisioning) follows
+   cyberrangecz/library-junior-hacker (code MIT, game design CC BY 4.0),
+   based on junior-hacker, Cybersecurity Laboratory, Faculty of Informatics, Masaryk University.
+
+The game design of this repository is therefore distributed under CC BY-NC-SA 4.0.

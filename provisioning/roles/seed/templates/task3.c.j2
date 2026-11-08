@@ -1,0 +1,19 @@
+#include <stdio.h>
+
+#define ID "{{ tok }}"
+
+unsigned char xyz[200] = {
+{% for i in range(20) %}
+  0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41,
+{% endfor %}
+};
+
+int main()
+{
+  int i;
+  printf("[%s] ", ID);
+  for (i=0; i<200; i++){
+    printf("%x", xyz[i]);
+  }
+  printf("\n");
+}
